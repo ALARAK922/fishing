@@ -9,17 +9,11 @@
   // 初始化地图
   const map = L.map("map", { zoomControl: true }).setView(CENTER, DEFAULT_ZOOM);
 
-  // ---------- 底图图层（Esri 街道图 / 卫星图，手动切换） ----------
-  // maxNativeZoom：源瓦片的最高真实级别；超过后 Leaflet 放大已有瓦片，避免请求空白级别
+  // ---------- 底图图层（Esri 卫星图 / 街道图，手动切换） ----------
+  // 实测（本网络）：卫星图全级别 z18 都有真实瓦片；街道图真实瓦片只到 z13，
+  // z14 起服务端返回空白占位图（HTTP 200）。因此街道图 maxNativeZoom=13，
+  // 超出级别 Leaflet 放大已有瓦片（模糊但不空白），卫星图可放大到 z18。
   const baseLayers = {
-    street: L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 18,
-        maxNativeZoom: 17,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom',
-      }
-    ),
     satellite: L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
@@ -28,10 +22,18 @@
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
       }
     ),
+    street: L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 16,
+        maxNativeZoom: 13,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom',
+      }
+    ),
   };
 
   let currentBase = null;
-  let currentName = "street";
+  let currentName = "satellite";
   const layerBtn = document.getElementById("btn-layer");
 
   function setBase(name) {
@@ -42,15 +44,15 @@
   }
 
   function updateLayerBtn() {
-    layerBtn.textContent = (currentName === "street") ? "🛰 卫星图" : "🗺 街道图";
+    layerBtn.textContent = (currentName === "satellite") ? "🗺 街道图" : "🛰 卫星图";
   }
   layerBtn.addEventListener("click", function () {
-    setBase(currentName === "street" ? "satellite" : "street");
+    setBase(currentName === "satellite" ? "street" : "satellite");
     updateLayerBtn();
   });
 
-  // 初始底图：街道图
-  setBase("street");
+  // 初始底图：卫星图（全缩放级别均有数据，放大不会空白）
+  setBase("satellite");
   updateLayerBtn();
 
   // 自定义标点图标：毒区 = 黄色星标 ★；其他 = 绿色标记 🎣
