@@ -1,0 +1,252 @@
+/* 上海钓鱼标点地图 —— 样式 */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 12px;
+  background: #0f4c5c;
+  color: #fff;
+  z-index: 1100;
+}
+.topbar h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 14px;
+  padding: 7px 12px;
+  transition: background 0.15s;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.3); }
+.btn-primary { background: #2a9d8f; }
+.btn-primary:hover { background: #21867a; }
+.btn-small { padding: 2px 9px; font-size: 16px; line-height: 1.2; }
+
+/* ---------- 地图 ---------- */
+#map { flex: 1; min-height: 0; z-index: 1; }
+
+/* ---------- 标点图标 ---------- */
+.spot-marker { background: transparent; border: none; }
+.spot-pin {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+}
+.spot-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+}
+/* 毒区：黄色星标 */
+.spot-pin-danger { background: #f5b301; }
+.spot-pin-danger::after { border-top: 7px solid #f5b301; }
+/* 其他：绿色标记 */
+.spot-pin-normal { background: #2e9e5b; }
+.spot-pin-normal::after { border-top: 7px solid #2e9e5b; }
+.temp-marker { font-size: 24px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); background: transparent; border: none; }
+.temp-pin { text-align: center; line-height: 30px; }
+
+/* ---------- 弹窗 ---------- */
+.popup-box { min-width: 220px; max-width: 320px; }
+.popup-box h3 { margin: 0 0 6px; font-size: 15px; }
+.popup-box p { margin: 3px 0; font-size: 13px; }
+.popup-coord { color: #555; font-family: Consolas, monospace; }
+.popup-note { color: #333; }
+.popup-type { color: #2a9d8f; font-weight: 600; }
+.popup-danger { color: #b8860b; font-weight: 700; }
+.snippet {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: none;
+}
+.btn-copy { margin-top: 6px; color: #fff; }
+.chk-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+/* ---------- 侧边栏 ---------- */
+.sidebar {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 88vw;
+  background: #fff;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-105%);
+  transition: transform 0.25s ease;
+}
+.sidebar.open { transform: translateX(0); }
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #eee;
+}
+.sidebar-head h2 { margin: 0; font-size: 16px; }
+.count { color: #2a9d8f; font-size: 14px; margin-left: 4px; }
+
+.spot-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.spot-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.spot-item:hover { background: #e8f6f4; }
+.spot-item-title-row { display: flex; align-items: center; gap: 6px; }
+.spot-item-title { font-weight: 600; font-size: 14px; color: #0f4c5c; }
+.spot-item-meta {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #777;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 徽章 */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.badge-danger { background: #f5b301; color: #5b4300; }
+.badge-other { background: #e3f2fd; color: #1565c0; }
+
+.hint {
+  padding: 10px 14px;
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+/* ---------- 说明弹窗 ---------- */
+.mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.mask.hidden { display: none; }
+.dialog {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px 22px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.dialog h2 { margin: 0 0 12px; font-size: 18px; }
+.dialog ol { margin: 0 0 14px; padding-left: 20px; font-size: 14px; line-height: 1.9; }
+.dialog code {
+  background: #f1f3f5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.dialog .btn-primary { display: block; margin-left: auto; color: #fff; }
+
+/* ---------- 外地钓点弹窗 ---------- */
+.dialog-wide { max-width: 560px; max-height: 80vh; display: flex; flex-direction: column; }
+.other-hint { margin: 0 0 10px; font-size: 13px; color: #666; }
+.other-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+.other-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.other-item:last-child { border-bottom: none; }
+.other-item-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.other-item-title { font-weight: 600; font-size: 14px; color: #0f4c5c; }
+.other-item-note {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.other-empty { color: #999; font-size: 13px; text-align: center; }
+
+/* ---------- 移动端 ---------- */
+@media (max-width: 600px) {
+  .topbar h1 { font-size: 15px; }
+  .topbar .btn { padding: 6px 8px; font-size: 13px; }
+}

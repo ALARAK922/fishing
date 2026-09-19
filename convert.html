@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>坐标转换工具 · 上海钓鱼标点地图</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 16px 48px;
+      font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+      background: #f4f7f8;
+      color: #222;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .sub { color: #666; font-size: 14px; margin: 0 0 20px; line-height: 1.7; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    }
+    .card h2 { font-size: 16px; margin: 0 0 12px; }
+    label { display: block; font-size: 13px; color: #555; margin: 10px 0 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 10px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: inherit;
+    }
+    textarea { font-family: Consolas, monospace; font-size: 13px; resize: vertical; }
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+    button {
+      margin-top: 14px;
+      padding: 10px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      background: #2a9d8f;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #21867a; }
+    button.secondary { background: #0f4c5c; }
+    button.secondary:hover { background: #0b3946; }
+    .result { margin-top: 12px; }
+    .result .coord {
+      font-family: Consolas, monospace;
+      background: #f1f3f5;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .ok { color: #2a9d8f; font-size: 13px; margin-top: 6px; }
+    .hidden { display: none; }
+    .note { font-size: 13px; color: #888; line-height: 1.8; }
+    a { color: #0f4c5c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🧭 坐标转换工具</h1>
+    <p class="sub">
+      国内地图坐标与地图页（OpenStreetMap）使用的 WGS84 坐标有偏移，直接使用会偏几百米。
+      在高德/百度地图上长按或右键得到坐标后，在这里转换成 WGS84。
+    </p>
+
+    <div class="card">
+      <h2>① 高德/百度坐标 → 地图坐标（WGS84）</h2>
+      <label>源坐标类型</label>
+      <select id="src-type">
+        <option value="gcj02">高德地图 / 腾讯地图（GCJ-02）</option>
+        <option value="bd09">百度地图（BD-09）</option>
+      </select>
+      <div class="row">
+        <div>
+          <label>经度 lng</label>
+          <input id="src-lng" placeholder="如 121.4907" />
+        </div>
+        <div>
+          <label>纬度 lat</label>
+          <input id="src-lat" placeholder="如 31.2403" />
+        </div>
+      </div>
+      <button id="btn-convert">转换 →</button>
+      <div class="result hidden" id="result-a">
+        <div class="coord" id="wgs-out"></div>
+        <div class="coord" id="wgs-snippet"></div>
+        <button class="secondary" id="btn-copy-a">复制代码片段</button>
+        <p class="ok" id="copy-ok-a"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>② 地图坐标 → 高德坐标（反向，用于在高德 App 里导航/找点）</h2>
+      <div class="row">
+        <div>
+          <label>经度 lng（WGS84）</label>
+          <input id="wgs-lng" placeholder="121.4907" />
+        </div>
+        <div>
+          <label>纬度 lat（WGS84）</label>
+          <input id="wgs-lat" placeholder="31.2403" />
+        </div>
+      </div>
+      <button id="btn-convert-back">转换 →</button>
+      <div class="result hidden" id="result-b">
+        <div class="coord" id="gcj-out"></div>
+        <p class="note">把上面这组坐标输入高德地图搜索框即可导航。</p>
+      </div>
+    </div>
+
+    <p class="note">
+      小提示：转换精度约 1 米内，足够钓鱼找点使用。地图页面上直接点击位置也能拿到
+      WGS84 坐标和现成的代码片段。
+      <a href="index.html">← 返回地图</a>
+    </p>
+  </div>
+
+  <script src="js/gcj02.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      const C = window.CoordConv;
+
+      function num(v) {
+        const n = parseFloat(String(v).trim());
+        return isNaN(n) ? null : n;
+      }
+
+      function show(id) {
+        const el = document.getElementById(id);
+        el.classList.remove("hidden");
+        return el;
+      }
+
+      function copy(text, okElId) {
+        const done = function () {
+          const ok = document.getElementById(okElId);
+          ok.textContent = "已复制 ✔ 粘贴到 js/spots.js 的数组中即可";
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(function () {
+            fallback(text); done();
+          });
+        } else {
+          fallback(text); done();
+        }
+      }
+      function fallback(text) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) { /* 忽略 */ }
+        document.body.removeChild(ta);
+      }
+
+      document.getElementById("btn-convert").addEventListener("click", function () {
+        const lng = num(document.getElementById("src-lng").value);
+        const lat = num(document.getElementById("src-lat").value);
+        const type = document.getElementById("src-type").value;
+        if (lng === null || lat === null) { alert("请填写有效的经度和纬度"); return; }
+
+        const wgs = type === "bd09" ? C.bd09ToWgs84(lng, lat) : C.gcj02ToWgs84(lng, lat);
+        const wLng = wgs.lng.toFixed(6);
+        const wLat = wgs.lat.toFixed(6);
+        document.getElementById("wgs-out").textContent =
+          "WGS84 坐标：" + wLat + ", " + wLng + "（lat, lng）";
+        const snippet = "{ name: \"标点名称\", lat: " + wLat + ", lng: " + wLng +
+          ", type: \"野河\", note: \"\" },";
+        document.getElementById("wgs-snippet").textContent = snippet;
+        document.getElementById("copy-ok-a").textContent = "";
+        show("result-a");
+
+        document.getElementById("btn-copy-a").onclick = function () {
+          copy(snippet, "copy-ok-a");
+        };
+      });
+
+      document.getElementById("btn-convert-back").addEventListener("click", function () {
+        const lng = num(document.getElementById("wgs-lng").value);
+        const lat = num(document.getElementById("wgs-lat").value);
+        if (lng === null || lat === null) { alert("请填写有效的经度和纬度"); return; }
+        const gcj = C.wgs84ToGcj02(lng, lat);
+        document.getElementById("gcj-out").textContent =
+          "高德坐标（GCJ-02）：" + gcj.lat.toFixed(6) + ", " + gcj.lng.toFixed(6) + "（lat, lng）";
+        show("result-b");
+      });
+    })();
+  </script>
+</body>
+</html>

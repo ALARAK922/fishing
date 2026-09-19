@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上海钓鱼标点地图</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎣</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="toggle-list" class="btn" title="显示/隐藏标点列表">☰ 标点</button>
+    <button id="btn-other" class="btn" title="查看外地钓点">🌍 外地</button>
+    <h1>🎣 上海钓鱼标点地图</h1>
+    <button id="btn-layer" class="btn" title="切换街道图/卫星图">🛰 卫星图</button>
+    <button id="btn-help" class="btn" title="使用说明">❓ 说明</button>
+  </header>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <h2>标点列表 <span id="spot-count" class="count"></span></h2>
+      <button id="btn-close-list" class="btn btn-small" title="收起">×</button>
+    </div>
+    <ul id="spot-list" class="spot-list"></ul>
+    <p class="hint">点击列表项可定位到该标点。<br />★ 黄色星标 = 毒区钓点，🎣 绿色 = 其他钓点。<br />添加标点方法见右上角「说明」。</p>
+  </aside>
+
+  <div id="map"></div>
+
+  <div id="other-mask" class="mask hidden">
+    <div class="dialog dialog-wide">
+      <h2>🌍 外地钓点（不在上海市）</h2>
+      <p class="other-hint">以下标点位于外地，仅记录参考，不标注在地图上：</p>
+      <ul id="other-list" class="other-list"></ul>
+      <button id="btn-close-other" class="btn btn-primary">关闭</button>
+    </div>
+  </div>
+
+  <div id="help-mask" class="mask hidden">
+    <div class="dialog">
+      <h2>使用说明</h2>
+      <ol>
+        <li><strong>图例：</strong>★ 黄色星标 = 毒区钓点；🎣 绿色标记 = 其他钓点。点击标记查看描述。</li>
+        <li><strong>添加标点：</strong>打开 <code>js/spots.js</code>，复制一行 <code>{ ... }</code> 填入名称和坐标即可。</li>
+        <li><strong>拿坐标：</strong>高德/百度地图上的坐标不能直接用（有偏移），请用配套工具 <a href="convert.html" target="_blank">convert.html（坐标转换）</a> 转换，或在地图上直接点击目标位置复制坐标。</li>
+        <li><strong>查看标点：</strong>点击地图上的标记查看详情；左侧列表可快速定位；左上角「🌍 外地」查看非上海钓点。</li>
+        <li><strong>切换底图：</strong>右上角按钮可在街道图 / 卫星图之间切换（卫星图看河岸、水闸更直观）。</li>
+      </ol>
+      <button id="btn-close-help" class="btn btn-primary">知道了</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/spots.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
