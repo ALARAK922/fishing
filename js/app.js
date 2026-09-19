@@ -9,74 +9,47 @@
   // 初始化地图
   const map = L.map("map", { zoomControl: true }).setView(CENTER, DEFAULT_ZOOM);
 
-  // ---------- 底图图层（主源 Esri：国内可达性好；OSM 作为最后回退） ----------
+  // ---------- 底图图层（Esri 街道图 / 卫星图，手动切换） ----------
+  // maxNativeZoom：源瓦片的最高真实级别；超过后 Leaflet 放大已有瓦片，避免请求空白级别
   const baseLayers = {
     street: L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
       {
-        maxZoom: 19,
+        maxZoom: 18,
+        maxNativeZoom: 17,
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom',
       }
     ),
     satellite: L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
-        maxZoom: 19,
+        maxZoom: 18,
+        maxNativeZoom: 18,
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
       }
     ),
-    osm: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }),
   };
 
   let currentBase = null;
   let currentName = "street";
-  let tileErrorCount = 0;
-  let autoSwitchCount = 0; // 连续自动切换次数（防止全部源不可用时死循环）
   const layerBtn = document.getElementById("btn-layer");
-
-  function nextName(fromName) {
-    if (fromName === "street") return "satellite";
-    if (fromName === "satellite") return "osm";
-    return "street";
-  }
 
   function setBase(name) {
     if (currentBase) map.removeLayer(currentBase);
     currentBase = baseLayers[name];
     currentBase.addTo(map);
     currentName = name;
-    tileErrorCount = 0;
   }
-
-  // 瓦片加载失败：连续失败 5 次自动切换下一个源；试过 3 个源仍失败则停止
-  function onTileError(name) {
-    return function () {
-      if (name !== currentName) return; // 非当前激活图层，忽略
-      tileErrorCount++;
-      if (tileErrorCount >= 5 && autoSwitchCount < 3) {
-        autoSwitchCount++;
-        setBase(nextName(name));
-        updateLayerBtn();
-      }
-    };
-  }
-  baseLayers.street.on("tileerror", onTileError("street"));
-  baseLayers.satellite.on("tileerror", onTileError("satellite"));
-  baseLayers.osm.on("tileerror", onTileError("osm"));
 
   function updateLayerBtn() {
     layerBtn.textContent = (currentName === "street") ? "🛰 卫星图" : "🗺 街道图";
   }
   layerBtn.addEventListener("click", function () {
-    autoSwitchCount = 0; // 手动切换重置自动切换计数
     setBase(currentName === "street" ? "satellite" : "street");
     updateLayerBtn();
   });
 
-  // 初始底图：街道图（默认）→ 失败自动切卫星图 → 再失败切 OSM
+  // 初始底图：街道图
   setBase("street");
   updateLayerBtn();
 
@@ -195,71 +168,6 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
-  }
-
-  // ---------- 点击地图取坐标（方便添加新标点） ----------
-  let tempMarker = null;
-  map.on("click", function (e) {
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
-    if (tempMarker) map.removeLayer(tempMarker);
-    tempMarker = L.marker([lat, lng], { icon: tempIcon }).addTo(map);
-
-    const coordPart = "lat: " + lat.toFixed(6) + ", lng: " + lng.toFixed(6);
-    const snippetNormal = "{ name: \"标点名称\", " + coordPart + ", type: \"野河\", note: \"\" },";
-    const snippetDanger = "{ name: \"标点名称\", " + coordPart + ", danger: true, type: \"毒区\", note: \"\" },";
-
-    const popup = L.popup()
-      .setLatLng(e.latlng)
-      .setContent(
-        '<div class="popup-box">' +
-        "<h3>此点坐标</h3>" +
-        '<p class="popup-coord">' + lat.toFixed(6) + ", " + lng.toFixed(6) + "</p>" +
-        '<textarea readonly rows="2" class="snippet" id="snippet">' + esc(snippetNormal) + "</textarea>" +
-        '<label class="chk-line"><input type="checkbox" id="chk-danger" /> 毒区标点（黄色星标 ★）</label>' +
-        '<button class="btn btn-primary btn-copy" id="btn-copy">复制代码片段</button>' +
-        "</div>"
-      )
-      .openOn(map);
-
-    popup.on("remove", function () {
-      if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
-    });
-
-    // 延迟绑定复制按钮与毒区勾选（popup 内容异步插入 DOM）
-    setTimeout(function () {
-      const btn = document.getElementById("btn-copy");
-      const chk = document.getElementById("chk-danger");
-      const ta = document.getElementById("snippet");
-      if (chk && ta) {
-        chk.addEventListener("change", function () {
-          ta.value = chk.checked ? snippetDanger : snippetNormal;
-        });
-      }
-      if (btn) {
-        btn.addEventListener("click", function () {
-          copyText(ta ? ta.value : "");
-          btn.textContent = "已复制 ✔";
-          setTimeout(function () { btn.textContent = "复制代码片段"; }, 1500);
-        });
-      }
-    }, 50);
-  });
-
-  function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
-    } else {
-      fallbackCopy(text);
-    }
-  }
-  function fallbackCopy(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand("copy"); } catch (err) { /* 忽略 */ }
-    document.body.removeChild(ta);
   }
 
   // ---------- URL 参数定位（?lat=&lng=&name= 分享/定位） ----------

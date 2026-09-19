@@ -90,26 +90,6 @@ body { display: flex; flex-direction: column; }
 .popup-note { color: #333; }
 .popup-type { color: #2a9d8f; font-weight: 600; }
 .popup-danger { color: #b8860b; font-weight: 700; }
-.snippet {
-  width: 100%;
-  margin-top: 6px;
-  padding: 6px;
-  font-family: Consolas, monospace;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: none;
-}
-.btn-copy { margin-top: 6px; color: #fff; }
-.chk-line {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #555;
-  cursor: pointer;
-}
 
 /* ---------- 侧边栏 ---------- */
 .sidebar {
